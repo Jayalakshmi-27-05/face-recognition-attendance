@@ -1,66 +1,59 @@
 import streamlit as st
-import pandas as pd
-import os
-
-st.set_page_config(page_title="AI Attendance Dashboard", layout="wide")
-
-st.title("📊 AI Face Recognition Attendance Dashboard")
-
-# -----------------------------
-# CREATE FILE IF NOT EXISTS
-# -----------------------------
-if not os.path.exists("attendance.csv"):
-    df = pd.DataFrame(columns=["Name", "Date", "Time"])
-    df.to_csv("attendance.csv", index=False)
-
-# Load attendance
-df = pd.read_csv("attendance.csv")
-
-# -----------------------------
-# METRICS
-# -----------------------------
-col1, col2, col3 = st.columns(3)
-
-with col1:
-    st.metric("Total Records", len(df))
-
-with col2:
-    st.metric("Unique Students", df["Name"].nunique())
-
-with col3:
-    st.metric("Days Recorded", df["Date"].nunique())
+        <h1>{df['Date'].nunique()}</h1>
+    </div>
+    ''', unsafe_allow_html=True)
 
 st.markdown("---")
 
-# -----------------------------
-# BAR CHART
-# -----------------------------
-st.subheader("📊 Attendance Count")
-
-if not df.empty:
-    st.bar_chart(df["Name"].value_counts())
-
-# -----------------------------
-# TABLE
-# -----------------------------
-st.subheader("📋 Attendance Records")
-st.dataframe(df, use_container_width=True)
-
-# -----------------------------
-# FILTER
-# -----------------------------
+# ---------------------------------
+# CHARTS SECTION
+# ---------------------------------
 if not df.empty:
 
-    st.subheader("🔍 Filter by Student")
+    left, right = st.columns(2)
 
-    name = st.selectbox(
+    with left:
+        st.markdown('<p class="section-title">📊 Attendance Count</p>', unsafe_allow_html=True)
+        attendance_count = df["Name"].value_counts()
+        st.bar_chart(attendance_count)
+
+    with right:
+        st.markdown('<p class="section-title">📈 Daily Attendance Trend</p>', unsafe_allow_html=True)
+        daily = df.groupby("Date").count()["Name"]
+        st.line_chart(daily)
+
+st.markdown("---")
+
+# ---------------------------------
+# FILTER SECTION
+# ---------------------------------
+st.markdown('<p class="section-title">🔍 Filter Records</p>', unsafe_allow_html=True)
+
+if not df.empty:
+
+    selected_name = st.selectbox(
         "Select Student",
-        df["Name"].unique()
+        ["All"] + list(df["Name"].unique())
     )
 
-    filtered = df[df["Name"] == name]
+    if selected_name == "All":
+        filtered_df = df
+    else:
+        filtered_df = df[df["Name"] == selected_name]
 
-    st.dataframe(filtered, use_container_width=True)
+    st.dataframe(filtered_df, use_container_width=True)
 
 else:
-    st.warning("No attendance data yet")
+    st.warning("No attendance records available")
+
+# ---------------------------------
+# LIVE STATUS
+# ---------------------------------
+st.sidebar.success("🟢 System Active")
+st.sidebar.info("🤖 AI Attendance Monitoring Running")
+
+# ---------------------------------
+# AUTO REFRESH TIMER
+# ---------------------------------
+time.sleep(refresh)
+st.rerun()
