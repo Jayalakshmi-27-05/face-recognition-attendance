@@ -1,61 +1,66 @@
 import streamlit as st
 import pandas as pd
+import os
 
 st.set_page_config(page_title="AI Attendance Dashboard", layout="wide")
 
-st.title("📊 AI Face Recognition Attendance System")
+st.title("📊 AI Face Recognition Attendance Dashboard")
 
-# Load data
+# -----------------------------
+# CREATE FILE IF NOT EXISTS
+# -----------------------------
+if not os.path.exists("attendance.csv"):
+    df = pd.DataFrame(columns=["Name", "Date", "Time"])
+    df.to_csv("attendance.csv", index=False)
+
+# Load attendance
 df = pd.read_csv("attendance.csv")
 
-# ---------------------------
-# 🧾 TOP CARDS (METRICS)
-# ---------------------------
+# -----------------------------
+# METRICS
+# -----------------------------
 col1, col2, col3 = st.columns(3)
 
 with col1:
-    st.markdown("### 👥 Total Records")
-    st.metric("Count", len(df))
+    st.metric("Total Records", len(df))
 
 with col2:
-    st.markdown("### 🧑‍🎓 Unique Students")
-    st.metric("Students", df["Name"].nunique())
+    st.metric("Unique Students", df["Name"].nunique())
 
 with col3:
-    st.markdown("### 📅 Days Recorded")
-    st.metric("Days", df["Date"].nunique())
+    st.metric("Days Recorded", df["Date"].nunique())
 
 st.markdown("---")
 
-# ---------------------------
-# 📊 BAR CHART
-# ---------------------------
-st.subheader("📊 Attendance Count per Student")
-count_data = df["Name"].value_counts()
-st.bar_chart(count_data)
+# -----------------------------
+# BAR CHART
+# -----------------------------
+st.subheader("📊 Attendance Count")
 
-# ---------------------------
-# 📈 DAILY ATTENDANCE
-# ---------------------------
-st.subheader("📅 Daily Attendance Trend")
-daily = df.groupby("Date").count()["Name"]
-st.line_chart(daily)
+if not df.empty:
+    st.bar_chart(df["Name"].value_counts())
 
-st.markdown("---")
-
-# ---------------------------
-# 📋 FULL TABLE
-# ---------------------------
+# -----------------------------
+# TABLE
+# -----------------------------
 st.subheader("📋 Attendance Records")
 st.dataframe(df, use_container_width=True)
 
-# ---------------------------
-# 🔍 FILTER SECTION
-# ---------------------------
-st.subheader("🔍 Filter Data")
+# -----------------------------
+# FILTER
+# -----------------------------
+if not df.empty:
 
-name = st.selectbox("Select Student", df["Name"].unique())
-filtered = df[df["Name"] == name]
+    st.subheader("🔍 Filter by Student")
 
-st.write("Filtered Records:")
-st.dataframe(filtered, use_container_width=True)
+    name = st.selectbox(
+        "Select Student",
+        df["Name"].unique()
+    )
+
+    filtered = df[df["Name"] == name]
+
+    st.dataframe(filtered, use_container_width=True)
+
+else:
+    st.warning("No attendance data yet")
